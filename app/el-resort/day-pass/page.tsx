@@ -5,8 +5,8 @@ import { motion } from "framer-motion"
 import { Check, Clock, DollarSign } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { HeroSection } from "@/components/sections/hero-section"
-import { SectionHeading } from "@/components/sections/section-heading"
 import { useLanguage } from "@/components/providers/language-provider"
+import { RESORT_IMAGES } from "@/lib/images"
 
 export default function DayPassPage() {
   const { t } = useLanguage()
@@ -24,7 +24,7 @@ export default function DayPassPage() {
       <HeroSection
         title={t.dayPass.title}
         subtitle={t.dayPass.subtitle}
-        backgroundImage="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80"
+        backgroundImage={RESORT_IMAGES.hero.dayPass}
         height="large"
       />
 
@@ -103,7 +103,7 @@ export default function DayPassPage() {
                   </div>
                 </div>
                 <p className="text-sm text-white/80 mb-6">
-                  Per person. Children under 5 free.
+                  Por persona. Ninos menores de 5 anos gratis.
                 </p>
                 <Button asChild className="w-full bg-white text-primary hover:bg-white/90">
                   <Link href="/reservaciones">{t.dayPass.bookDayPass}</Link>

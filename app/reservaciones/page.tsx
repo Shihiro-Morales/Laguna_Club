@@ -5,6 +5,7 @@ import { Clock, CreditCard, CalendarX, Phone, Mail, MapPin, Tag } from "lucide-r
 import { HeroSection } from "@/components/sections/hero-section"
 import { ReservationForm } from "@/components/forms/reservation-form"
 import { useLanguage } from "@/components/providers/language-provider"
+import { RESORT_IMAGES } from "@/lib/images"
 
 export default function ReservacionesPage() {
   const { t } = useLanguage()
@@ -19,7 +20,7 @@ export default function ReservacionesPage() {
   const promotions = [
     {
       title: "Early Bird",
-      description: "20% descuento reservando con 30 días de anticipación",
+      description: "20% descuento reservando con 30 dias de anticipacion",
       discount: "20%",
     },
     {
@@ -28,8 +29,8 @@ export default function ReservacionesPage() {
       discount: "15%",
     },
     {
-      title: "Larga Estadía",
-      description: "10% descuento en estadías de 5+ noches",
+      title: "Larga Estadia",
+      description: "10% descuento en estadias de 5+ noches",
       discount: "10%",
     },
   ]
@@ -39,7 +40,7 @@ export default function ReservacionesPage() {
       <HeroSection
         title={t.reservations.title}
         subtitle={t.reservations.subtitle}
-        backgroundImage="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920&q=80"
+        backgroundImage={RESORT_IMAGES.hero.reservations}
         height="large"
       />
 

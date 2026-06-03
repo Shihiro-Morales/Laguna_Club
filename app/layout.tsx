@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { Toaster } from 'sonner'
 import { LanguageProvider } from '@/components/providers/language-provider'
 import { AuthProvider } from '@/components/providers/auth-provider'
 import { Header } from '@/components/layout/header'
@@ -70,6 +71,12 @@ export default function RootLayout({
             <Footer />
           </LanguageProvider>
         </AuthProvider>
+        <Toaster 
+          position="top-right" 
+          expand={false}
+          richColors
+          closeButton
+        />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
