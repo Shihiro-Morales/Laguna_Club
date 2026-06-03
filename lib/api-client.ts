@@ -1,7 +1,7 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   'https://backend-lagunaclub.onrender.com';
-
+  
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
 
