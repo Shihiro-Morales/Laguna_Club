@@ -6,6 +6,7 @@ import { HeroSection } from "@/components/sections/hero-section"
 import { SectionHeading } from "@/components/sections/section-heading"
 import { ActivityCard } from "@/components/cards/activity-card"
 import { useLanguage } from "@/components/providers/language-provider"
+import { RESORT_IMAGES } from "@/lib/images"
 
 export default function ActividadesPage() {
   const { t } = useLanguage()
@@ -15,37 +16,37 @@ export default function ActividadesPage() {
       title: t.activities.kayak,
       description: t.activities.kayakDesc,
       icon: Sailboat,
-      image: "https://images.unsplash.com/photo-1472745942893-4b9f730c7668?w=800&q=80",
+      image: RESORT_IMAGES.features.kayak,
     },
     {
       title: t.activities.swimming,
       description: t.activities.swimmingDesc,
       icon: Waves,
-      image: "https://images.unsplash.com/photo-1530053969600-caed2596d242?w=800&q=80",
+      image: RESORT_IMAGES.features.swimming,
     },
     {
       title: t.activities.floats,
       description: t.activities.floatsDesc,
       icon: Circle,
-      image: "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=800&q=80",
+      image: RESORT_IMAGES.features.beach,
     },
     {
       title: t.activities.games,
       description: t.activities.gamesDesc,
       icon: Gamepad2,
-      image: "https://images.unsplash.com/photo-1596178060671-7a80dc8059ea?w=800&q=80",
+      image: RESORT_IMAGES.features.dock,
     },
     {
       title: t.activities.hammocks,
       description: t.activities.hammocksDesc,
       icon: BedDouble,
-      image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
+      image: RESORT_IMAGES.features.pool,
     },
     {
       title: t.activities.commonAreas,
       description: t.activities.commonAreasDesc,
       icon: Users,
-      image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80",
+      image: RESORT_IMAGES.features.lakeView,
     },
   ]
 
@@ -54,7 +55,7 @@ export default function ActividadesPage() {
       <HeroSection
         title={t.activities.title}
         subtitle={t.activities.subtitle}
-        backgroundImage="https://images.unsplash.com/photo-1530053969600-caed2596d242?w=1920&q=80"
+        backgroundImage={RESORT_IMAGES.hero.activities}
         height="large"
       />
 

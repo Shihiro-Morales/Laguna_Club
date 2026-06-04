@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/providers/auth-provider';
-import { crearReserva, getHabitaciones } from '@/lib/api-client';
+import { crearReserva, getHabitaciones, APIError } from '@/lib/api-client';
+import { notifications, showError } from '@/lib/notifications';
 import { LoginModal } from '@/components/auth/login-modal';
 import { RegisterModal } from '@/components/auth/register-modal';
 import { Habitacion } from '@/lib/types';
@@ -10,6 +11,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/components/providers/language-provider';
 import { cn } from '@/lib/utils';
+import { Loader2, CheckCircle, LogIn, UserPlus } from 'lucide-react';
 
 interface ReservationFormProps {
   className?: string;
@@ -19,6 +21,7 @@ export function ReservationForm({ className }: ReservationFormProps) {
   const { t } = useLanguage();
   const { user, isAuthenticated } = useAuth();
   const [habitaciones, setHabitaciones] = useState<Habitacion[]>([]);
+  const [loadingHabitaciones, setLoadingHabitaciones] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -36,10 +39,16 @@ export function ReservationForm({ className }: ReservationFormProps) {
   useEffect(() => {
     const loadHabitaciones = async () => {
       try {
+        setLoadingHabitaciones(true);
         const data = await getHabitaciones();
         setHabitaciones(Array.isArray(data) ? data : data.results || []);
-      } catch (err) {
+      } catch (err: any) {
         console.error('[v0] Error loading habitaciones:', err);
+        if (err instanceof APIError) {
+          showError('Error al cargar habitaciones: ' + err.message);
+        }
+      } finally {
+        setLoadingHabitaciones(false);
       }
     };
     loadHabitaciones();
@@ -61,8 +70,9 @@ export function ReservationForm({ className }: ReservationFormProps) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Verificar autenticación
+    // Verificar autenticacion
     if (!isAuthenticated) {
+      notifications.authRequired();
       setShowLoginModal(true);
       return;
     }
@@ -73,7 +83,7 @@ export function ReservationForm({ className }: ReservationFormProps) {
     try {
       // Validaciones
       if (!formData.habitacion) {
-        throw new Error('Por favor selecciona una habitación');
+        throw new Error('Por favor selecciona una habitacion');
       }
       if (!formData.fecha_entrada || !formData.fecha_salida) {
         throw new Error('Por favor selecciona las fechas de entrada y salida');
@@ -81,21 +91,27 @@ export function ReservationForm({ className }: ReservationFormProps) {
 
       const entrada = new Date(formData.fecha_entrada);
       const salida = new Date(formData.fecha_salida);
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+
+      if (entrada < hoy) {
+        throw new Error('La fecha de entrada no puede ser anterior a hoy');
+      }
 
       if (salida <= entrada) {
         throw new Error('La fecha de salida debe ser posterior a la de entrada');
       }
 
-      // Obtener info de habitación para calcular el total
+      // Obtener info de habitacion para calcular el total
       const habitacionSeleccionada = habitaciones.find(
         (h) => h.id.toString() === formData.habitacion
       );
 
       if (!habitacionSeleccionada) {
-        throw new Error('Habitación no válida');
+        throw new Error('Habitacion no valida');
       }
 
-      // Calcular total: precio_noche * número_noches
+      // Calcular total: precio_noche * numero_noches
       const noches = Math.ceil(
         (salida.getTime() - entrada.getTime()) / (1000 * 60 * 60 * 24)
       );
@@ -112,7 +128,9 @@ export function ReservationForm({ className }: ReservationFormProps) {
         estado: 'pendiente',
       });
 
+      notifications.reservationSuccess();
       setIsSubmitted(true);
+      
       setTimeout(() => {
         setFormData({
           habitacion: '',
@@ -124,12 +142,35 @@ export function ReservationForm({ className }: ReservationFormProps) {
         setIsSubmitted(false);
       }, 3000);
     } catch (err: any) {
-      setError(err.message || 'Error al crear la reserva');
-      console.error('[v0] Error:', err);
+      const errorMessage = err instanceof APIError 
+        ? err.message 
+        : err.message || 'Error al crear la reserva';
+      setError(errorMessage);
+      showError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Calculate price preview
+  const getPricePreview = () => {
+    if (!formData.habitacion || !formData.fecha_entrada || !formData.fecha_salida) {
+      return null;
+    }
+    const habitacion = habitaciones.find(h => h.id.toString() === formData.habitacion);
+    if (!habitacion) return null;
+    
+    const entrada = new Date(formData.fecha_entrada);
+    const salida = new Date(formData.fecha_salida);
+    if (salida <= entrada) return null;
+    
+    const noches = Math.ceil((salida.getTime() - entrada.getTime()) / (1000 * 60 * 60 * 24));
+    const total = habitacion.precio * noches;
+    
+    return { noches, precioNoche: habitacion.precio, total };
+  };
+
+  const pricePreview = getPricePreview();
 
   if (isSubmitted) {
     return (
@@ -139,12 +180,10 @@ export function ReservationForm({ className }: ReservationFormProps) {
         className={cn('rounded-2xl bg-card border border-border p-8 text-center', className)}
       >
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary/20 text-secondary mx-auto mb-4">
-          <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
+          <CheckCircle className="h-8 w-8" />
         </div>
         <h3 className="font-serif text-xl font-semibold text-foreground mb-2">
-          ¡Reserva Confirmada!
+          Reserva Confirmada
         </h3>
         <p className="text-muted-foreground">
           Tu reserva ha sido creada exitosamente. Te contactaremos pronto para confirmar los detalles.
@@ -167,35 +206,53 @@ export function ReservationForm({ className }: ReservationFormProps) {
           {t.reservations.formTitle}
         </h3>
 
+        {/* Auth prompt for non-authenticated users */}
         {!isAuthenticated && (
+          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-6">
+            <p className="text-sm text-foreground mb-3">
+              Debes iniciar sesion para hacer una reserva.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={() => setShowLoginModal(true)}
+                className="flex items-center gap-2"
+              >
+                <LogIn className="h-4 w-4" />
+                Iniciar Sesion
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowRegisterModal(true)}
+                className="flex items-center gap-2"
+              >
+                <UserPlus className="h-4 w-4" />
+                Crear Cuenta
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Welcome message for authenticated users */}
+        {isAuthenticated && user && (
           <p className="text-sm text-muted-foreground mb-4">
-            Debes estar conectado para hacer una reserva.{' '}
-            <button
-              type="button"
-              onClick={() => setShowLoginModal(true)}
-              className="text-primary hover:underline font-semibold"
-            >
-              Inicia sesión aquí
-            </button>
-            {' '}o{' '}
-            <button
-              type="button"
-              onClick={() => setShowRegisterModal(true)}
-              className="text-primary hover:underline font-semibold"
-            >
-              crea una cuenta
-            </button>
+            Bienvenido, <span className="font-medium text-foreground">{user.first_name || user.username}</span>. Completa el formulario para reservar.
           </p>
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded p-3 text-red-700 text-sm mb-4">
-            {error}
+          <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 text-destructive text-sm mb-6">
+            <p className="font-medium">Error</p>
+            <p className="mt-1">{error}</p>
           </div>
         )}
 
         <div className="space-y-5">
-          {/* Habitación */}
+          {/* Habitacion */}
           <div>
             <label htmlFor="habitacion" className="block text-sm font-medium text-foreground mb-2">
               {t.reservations.roomType}
@@ -206,10 +263,10 @@ export function ReservationForm({ className }: ReservationFormProps) {
               value={formData.habitacion}
               onChange={handleChange}
               required
-              disabled={!isAuthenticated}
+              disabled={!isAuthenticated || loadingHabitaciones}
               className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <option value="">{t.reservations.selectRoom}</option>
+              <option value="">{loadingHabitaciones ? 'Cargando...' : t.reservations.selectRoom}</option>
               {habitaciones.map((habitacion) => (
                 <option key={habitacion.id} value={habitacion.id}>
                   {habitacion.nombre} - ${habitacion.precio}/noche
@@ -230,6 +287,7 @@ export function ReservationForm({ className }: ReservationFormProps) {
                 name="fecha_entrada"
                 value={formData.fecha_entrada}
                 onChange={handleChange}
+                min={new Date().toISOString().split('T')[0]}
                 required
                 disabled={!isAuthenticated}
                 className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
@@ -245,6 +303,7 @@ export function ReservationForm({ className }: ReservationFormProps) {
                 name="fecha_salida"
                 value={formData.fecha_salida}
                 onChange={handleChange}
+                min={formData.fecha_entrada || new Date().toISOString().split('T')[0]}
                 required
                 disabled={!isAuthenticated}
                 className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
@@ -267,11 +326,32 @@ export function ReservationForm({ className }: ReservationFormProps) {
             >
               {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
                 <option key={num} value={num}>
-                  {num} {num === 1 ? 'huésped' : 'huéspedes'}
+                  {num} {num === 1 ? 'huesped' : 'huespedes'}
                 </option>
               ))}
             </select>
           </div>
+
+          {/* Price Preview */}
+          {pricePreview && isAuthenticated && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="bg-secondary/10 border border-secondary/20 rounded-xl p-4"
+            >
+              <h4 className="font-medium text-foreground mb-2">Resumen del precio</h4>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between text-muted-foreground">
+                  <span>${pricePreview.precioNoche} x {pricePreview.noches} noches</span>
+                  <span>${pricePreview.total.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-semibold text-foreground pt-2 border-t border-border">
+                  <span>Total</span>
+                  <span className="text-primary">${pricePreview.total.toFixed(2)}</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Submit */}
           <Button
@@ -279,7 +359,14 @@ export function ReservationForm({ className }: ReservationFormProps) {
             disabled={isSubmitting || !isAuthenticated}
             className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground py-6 text-lg rounded-xl"
           >
-            {isSubmitting ? t.common.loading : t.reservations.submit}
+            {isSubmitting ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Procesando...
+              </span>
+            ) : (
+              t.reservations.submit
+            )}
           </Button>
         </div>
       </motion.form>
@@ -291,6 +378,9 @@ export function ReservationForm({ className }: ReservationFormProps) {
           setShowLoginModal(false);
           setShowRegisterModal(true);
         }}
+        onSuccess={() => {
+          // User just logged in, form is now enabled
+        }}
       />
 
       <RegisterModal
@@ -299,6 +389,9 @@ export function ReservationForm({ className }: ReservationFormProps) {
         onSwitchToLogin={() => {
           setShowRegisterModal(false);
           setShowLoginModal(true);
+        }}
+        onSuccess={() => {
+          // User just registered and logged in, form is now enabled
         }}
       />
     </>

@@ -9,15 +9,7 @@ import { HeroSection } from "@/components/sections/hero-section"
 import { SectionHeading } from "@/components/sections/section-heading"
 import { ServiceCard } from "@/components/cards/service-card"
 import { useLanguage } from "@/components/providers/language-provider"
-
-const galleryImages = [
-  "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=800&q=80",
-  "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
-  "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80",
-  "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=80",
-  "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80",
-  "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&q=80",
-]
+import { RESORT_IMAGES } from "@/lib/images"
 
 export default function HomePage() {
   const { t } = useLanguage()
@@ -79,7 +71,7 @@ export default function HomePage() {
         title={t.home.heroTitle}
         subtitle={t.home.heroSubtitle}
         description={t.home.heroDescription}
-        backgroundImage="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80"
+        backgroundImage={RESORT_IMAGES.hero.main}
         primaryCta={{ text: t.home.ctaBook, href: "/reservaciones" }}
         secondaryCta={{ text: t.home.ctaExplore, href: "/el-resort" }}
         showScrollIndicator
@@ -130,8 +122,8 @@ export default function HomePage() {
             >
               <div className="relative aspect-[4/5] rounded-2xl overflow-hidden">
                 <Image
-                  src="https://images.unsplash.com/photo-1540541338287-41700207dee6?w=800&q=80"
-                  alt="Laguna de Apoyo"
+                  src={RESORT_IMAGES.features.swimming}
+                  alt="Nadando en Laguna de Apoyo"
                   fill
                   className="object-cover"
                   sizes="(max-width: 1024px) 100vw, 50vw"
@@ -151,7 +143,7 @@ export default function HomePage() {
                   </div>
                   <span className="font-serif font-semibold text-foreground">Laguna de Apoyo</span>
                 </div>
-                <p className="text-sm text-muted-foreground">Nicaragua&apos;s deepest volcanic lagoon</p>
+                <p className="text-sm text-muted-foreground">La laguna volcanica mas profunda de Nicaragua</p>
               </motion.div>
             </motion.div>
 
@@ -199,7 +191,7 @@ export default function HomePage() {
           />
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {galleryImages.map((src, index) => (
+            {RESORT_IMAGES.homeGallery.map((src, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -212,7 +204,7 @@ export default function HomePage() {
               >
                 <Image
                   src={src}
-                  alt={`Gallery image ${index + 1}`}
+                  alt={`Laguna Beach Club ${index + 1}`}
                   fill
                   className="object-cover hover:scale-105 transition-transform duration-500"
                   sizes="(max-width: 768px) 50vw, 33vw"
@@ -279,7 +271,7 @@ export default function HomePage() {
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: "url(https://images.unsplash.com/photo-1573843981267-be1999ff37cd?w=1920&q=80)",
+            backgroundImage: `url(${RESORT_IMAGES.cta})`,
           }}
         />
         <div className="absolute inset-0 bg-primary/80" />

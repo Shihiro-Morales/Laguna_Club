@@ -2,15 +2,18 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/components/providers/auth-provider';
-import { X } from 'lucide-react';
+import { notifications } from '@/lib/notifications';
+import { APIError } from '@/lib/api-client';
+import { X, Loader2 } from 'lucide-react';
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSwitchToRegister?: () => void;
+  onSuccess?: () => void;
 }
 
-export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalProps) {
+export function LoginModal({ isOpen, onClose, onSwitchToRegister, onSuccess }: LoginModalProps) {
   const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -24,83 +27,116 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
 
     try {
       await login(username, password);
-      onClose();
+      notifications.loginSuccess();
       setUsername('');
       setPassword('');
+      onClose();
+      onSuccess?.();
     } catch (err: any) {
-      setError(err.message || 'Error al iniciar sesión');
+      const errorMessage = err instanceof APIError 
+        ? err.message 
+        : err.message || 'Error al iniciar sesion';
+      setError(errorMessage);
+      // Don't show toast here since we show inline error
     } finally {
       setLoading(false);
     }
   };
 
+  const handleClose = () => {
+    setError('');
+    setUsername('');
+    setPassword('');
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full p-8 relative">
+    <div 
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={handleClose}
+    >
+      <div 
+        className="bg-card rounded-2xl max-w-md w-full p-8 relative shadow-2xl border border-border animate-in fade-in-0 zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+          type="button"
+          onClick={handleClose}
+          className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-muted"
+          aria-label="Cerrar"
         >
           <X size={24} />
         </button>
 
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Iniciar Sesión</h2>
+        <h2 className="font-serif text-2xl font-bold text-foreground mb-6">Iniciar Sesion</h2>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded p-3 text-red-700 text-sm mb-4">
-            {error}
+          <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 text-destructive text-sm mb-6">
+            <p className="font-medium">Error</p>
+            <p className="mt-1 whitespace-pre-line">{error}</p>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Usuario o Email
             </label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-input bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              placeholder="Ingresa tu usuario"
               required
+              disabled={loading}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Contraseña
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Contrasena
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-input bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              placeholder="Ingresa tu contrasena"
               required
+              disabled={loading}
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 text-white font-semibold py-2 rounded-lg transition-colors"
+            className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
           >
-            {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+            {loading ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Iniciando sesion...
+              </>
+            ) : (
+              'Iniciar Sesion'
+            )}
           </button>
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-gray-600 text-sm">
-            ¿No tienes cuenta?{' '}
+          <p className="text-muted-foreground text-sm">
+            No tienes cuenta?{' '}
             <button
               onClick={() => {
-                onClose();
+                handleClose();
                 onSwitchToRegister?.();
               }}
-              className="text-cyan-600 hover:text-cyan-700 font-semibold"
+              className="text-primary hover:text-primary/80 font-semibold transition-colors"
             >
-              Regístrate aquí
+              Registrate aqui
             </button>
           </p>
         </div>

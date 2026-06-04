@@ -1,7 +1,13 @@
+import { 
+  parseDjangoErrors, 
+  getStatusMessage,
+  notifications 
+} from './notifications';
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   'https://backend-lagunaclub.onrender.com';
-  
+
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
 
@@ -43,7 +49,39 @@ function getTokens() {
   return { accessToken, refreshToken };
 }
 
-// Hacer fetch con autenticación
+// Custom error class for API errors
+export class APIError extends Error {
+  status: number;
+  errors?: Record<string, string[]>;
+  
+  constructor(message: string, status: number, errors?: Record<string, string[]>) {
+    super(message);
+    this.name = 'APIError';
+    this.status = status;
+    this.errors = errors;
+  }
+}
+
+// Parse error response from Django
+function parseErrorResponse(data: any, status: number): APIError {
+  // Check for Django validation errors (field-level errors)
+  if (typeof data === 'object' && !data.Message && !data.message) {
+    // This might be a validation error object like { "username": ["Already exists"] }
+    const hasFieldErrors = Object.keys(data).some(key => 
+      Array.isArray(data[key]) || typeof data[key] === 'string'
+    );
+    if (hasFieldErrors) {
+      const message = parseDjangoErrors(data);
+      return new APIError(message, status, data);
+    }
+  }
+  
+  // Standard ResponseData format
+  const message = data.Message || data.message || data.detail || getStatusMessage(status);
+  return new APIError(message, status, data.errors);
+}
+
+// Hacer fetch con autenticacion
 async function fetchAPI<T = any>(
   endpoint: string,
   options: RequestInit = {}
@@ -73,26 +111,38 @@ async function fetchAPI<T = any>(
         return fetchAPI<T>(endpoint, options);
       } else {
         clearTokens();
-        throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
+        notifications.sessionExpired();
+        throw new APIError('Sesion expirada. Por favor, inicia sesion nuevamente.', 401);
       }
     }
 
     const responseData = await response.json();
 
-    // Manejar estructura ResponseData del backend
+    // Handle error responses
+    if (!response.ok) {
+      throw parseErrorResponse(responseData, response.status);
+    }
+
+    // Handle backend ResponseData format with Success: false
     if (responseData.Success === false) {
-      throw new Error(responseData.Message || 'Error en la API');
+      throw parseErrorResponse(responseData, responseData.Status || 400);
     }
 
-    if (!response.ok && responseData.Status >= 400) {
-      throw new Error(responseData.Message || `API Error: ${response.status}`);
-    }
-
-    // Retornar Record o la data completa si no tiene estructura ResponseData
+    // Return Record if present, otherwise full response
     return responseData.Record !== undefined ? responseData.Record : responseData;
   } catch (error: any) {
-    console.error('[v0] API Error:', error);
-    throw error;
+    // Re-throw APIError as-is
+    if (error instanceof APIError) {
+      throw error;
+    }
+    
+    // Handle network errors
+    if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+      throw new APIError('Error de conexion. Verifica tu conexion a internet.', 0);
+    }
+    
+    // Handle other errors
+    throw new APIError(error.message || 'Error desconocido', 500);
   }
 }
 
@@ -111,47 +161,42 @@ async function refreshAccessToken(): Promise<boolean> {
     if (!response.ok) return false;
 
     const data = await response.json();
-    // El backend retorna ResponseData con Record = {access, refresh}
     const record = data.Record || data;
     saveTokens(record.access, token);
     return true;
   } catch (error) {
-    console.error('[v0] Refresh token error:', error);
     return false;
   }
 }
 
 // ============ ENDPOINTS ============
 
-// Autenticación - Login (usa username, no email)
+// Autenticacion - Login (usa username, no email)
 export async function login(username: string, password: string) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/login/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    });
+  const response = await fetch(`${API_BASE_URL}/api/login/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
 
-    const data = await response.json();
+  const data = await response.json();
 
-    if (!data.Success) {
-      throw new Error(data.Message || 'Error al iniciar sesión');
-    }
-
-    const record = data.Record || data;
-    saveTokens(record.access, record.refresh);
-    
-    return {
-      access: record.access,
-      refresh: record.refresh,
-      user: record.user,
-    };
-  } catch (error: any) {
-    throw error;
+  // Handle error response
+  if (!response.ok || data.Success === false) {
+    throw parseErrorResponse(data, response.status);
   }
+
+  const record = data.Record || data;
+  saveTokens(record.access, record.refresh);
+
+  return {
+    access: record.access,
+    refresh: record.refresh,
+    user: record.user,
+  };
 }
 
-// Autenticación - Registro
+// Autenticacion - Registro
 export async function register(userData: {
   username: string;
   email: string;
@@ -161,30 +206,37 @@ export async function register(userData: {
   last_name: string;
   telefono?: string;
 }) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/register/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData),
-    });
+  const response = await fetch(`${API_BASE_URL}/api/v1/register/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(userData),
+  });
 
-    const data = await response.json();
+  const data = await response.json();
 
-    if (!data.Success) {
-      throw new Error(data.Message || 'Error al registrarse');
+  // Handle error response - check for field-level validation errors
+  if (!response.ok) {
+    // If response has field-level errors (Django validation)
+    if (typeof data === 'object' && !data.Message && !data.Success) {
+      const message = parseDjangoErrors(data);
+      throw new APIError(message, response.status, data);
     }
-
-    const record = data.Record || data;
-    
-    // Si el backend retorna tokens en el registro
-    if (record.access && record.refresh) {
-      saveTokens(record.access, record.refresh);
-    }
-
-    return record;
-  } catch (error: any) {
-    throw error;
+    throw parseErrorResponse(data, response.status);
   }
+
+  // Handle backend format with Success: false
+  if (data.Success === false) {
+    throw parseErrorResponse(data, data.Status || 400);
+  }
+
+  const record = data.Record || data;
+
+  // Si el backend retorna tokens en el registro
+  if (record.access && record.refresh) {
+    saveTokens(record.access, record.refresh);
+  }
+
+  return record;
 }
 
 export async function logout() {
@@ -223,7 +275,7 @@ export async function getHabitacion(id: number) {
   return fetchAPI(`/api/habitacion/Habitacion/${id}/`);
 }
 
-// Verificar disponibilidad de habitación
+// Verificar disponibilidad de habitacion
 export async function checkDisponibilidad(
   habitacionId: number,
   fechaEntrada: string,
@@ -344,4 +396,4 @@ export async function confirmarPago(id: number) {
   });
 }
 
-export { getTokens, saveTokens, clearTokens };
+export { getTokens, saveTokens, clearTokens, APIError };

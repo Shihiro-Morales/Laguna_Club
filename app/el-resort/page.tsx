@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { motion } from "framer-motion"
 import { Waves, Sun, UtensilsCrossed, MapPin, Images, Sparkles } from "lucide-react"
 import { HeroSection } from "@/components/sections/hero-section"
@@ -8,6 +9,7 @@ import { SectionHeading } from "@/components/sections/section-heading"
 import { ServiceCard } from "@/components/cards/service-card"
 import { ServiceGrid } from "@/components/services/service-grid"
 import { useLanguage } from "@/components/providers/language-provider"
+import { RESORT_IMAGES } from "@/lib/images"
 
 export default function ElResortPage() {
   const { t } = useLanguage()
@@ -56,7 +58,7 @@ export default function ElResortPage() {
       <HeroSection
         title={t.resort.title}
         subtitle={t.resort.subtitle}
-        backgroundImage="https://images.unsplash.com/photo-1540541338287-41700207dee6?w=1920&q=80"
+        backgroundImage={RESORT_IMAGES.hero.resort}
         height="large"
       />
 
@@ -129,35 +131,35 @@ export default function ElResortPage() {
             >
               <SectionHeading
                 title="Sobre Laguna Beach Club"
-                subtitle="Más de una década de excelencia en hospitalidad"
+                subtitle="Mas de una decada de excelencia en hospitalidad"
                 className="mb-6 text-left"
               />
               
               <div className="space-y-4 text-muted-foreground">
                 <p>
-                  Laguna Beach Club es un resort ecológico ubicado en las orillas de la hermosa Laguna de Apoyo en Nicaragua. Desde nuestra fundación, hemos sido pioneros en ofrecer experiencias auténticas y sostenibles en uno de los destinos más paradisíacos de Centroamérica.
+                  Laguna Beach Club es un resort ecologico ubicado en las orillas de la hermosa Laguna de Apoyo en Nicaragua. Desde nuestra fundacion, hemos sido pioneros en ofrecer experiencias autenticas y sostenibles en uno de los destinos mas paradisiacos de Centroamerica.
                 </p>
                 
                 <p>
-                  Nuestro compromiso es proporcionar un refugio donde la naturaleza, la relajación y la aventura se encuentran en armonía. Cada aspecto de nuestro resort está diseñado para garantizar que disfrutes de la experiencia más memorable.
+                  Nuestro compromiso es proporcionar un refugio donde la naturaleza, la relajacion y la aventura se encuentran en armonia. Cada aspecto de nuestro resort esta disenado para garantizar que disfrutes de la experiencia mas memorable.
                 </p>
 
                 <div className="grid grid-cols-2 gap-4 mt-8">
                   <div className="bg-background p-4 rounded-lg border border-border">
                     <p className="text-2xl font-bold text-primary">500+</p>
-                    <p className="text-sm text-muted-foreground">Huéspedes anuales</p>
+                    <p className="text-sm text-muted-foreground">Huespedes anuales</p>
                   </div>
                   <div className="bg-background p-4 rounded-lg border border-border">
                     <p className="text-2xl font-bold text-primary">25+</p>
-                    <p className="text-sm text-muted-foreground">Años de experiencia</p>
+                    <p className="text-sm text-muted-foreground">Anos de experiencia</p>
                   </div>
                   <div className="bg-background p-4 rounded-lg border border-border">
                     <p className="text-2xl font-bold text-primary">15+</p>
                     <p className="text-sm text-muted-foreground">Actividades disponibles</p>
                   </div>
                   <div className="bg-background p-4 rounded-lg border border-border">
-                    <p className="text-2xl font-bold text-primary">4.9★</p>
-                    <p className="text-sm text-muted-foreground">Calificación promedio</p>
+                    <p className="text-2xl font-bold text-primary">4.9</p>
+                    <p className="text-sm text-muted-foreground">Calificacion promedio</p>
                   </div>
                 </div>
               </div>
@@ -169,12 +171,15 @@ export default function ElResortPage() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="rounded-2xl overflow-hidden h-96 bg-gradient-to-br from-cyan-400 to-blue-600"
+              className="relative rounded-2xl overflow-hidden h-96"
             >
-              <div className="w-full h-full bg-cover bg-center" style={{
-                backgroundImage: "url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80')",
-              }}>
-              </div>
+              <Image
+                src={RESORT_IMAGES.about}
+                alt="Laguna Beach Club"
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
             </motion.div>
           </div>
         </div>
