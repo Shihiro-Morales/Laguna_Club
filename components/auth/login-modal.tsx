@@ -53,11 +53,19 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, onSuccess }: L
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-2xl max-w-md w-full p-8 relative shadow-2xl border border-border animate-in fade-in-0 zoom-in-95 duration-200">
+    <div 
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={handleClose}
+    >
+      <div 
+        className="bg-card rounded-2xl max-w-md w-full p-8 relative shadow-2xl border border-border animate-in fade-in-0 zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
+          type="button"
           onClick={handleClose}
-          className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+          className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-muted"
+          aria-label="Cerrar"
         >
           <X size={24} />
         </button>

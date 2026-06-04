@@ -120,8 +120,22 @@ export function RegisterModal({ isOpen, onClose, onSwitchToLogin, onSuccess }: R
 
   if (success) {
     return (
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div className="bg-card rounded-2xl max-w-md w-full p-8 relative shadow-2xl border border-border text-center animate-in fade-in-0 zoom-in-95 duration-200">
+      <div 
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        onClick={handleClose}
+      >
+        <div 
+          className="bg-card rounded-2xl max-w-md w-full p-8 relative shadow-2xl border border-border text-center animate-in fade-in-0 zoom-in-95 duration-200"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            onClick={handleClose}
+            className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-muted"
+            aria-label="Cerrar"
+          >
+            <X size={24} />
+          </button>
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary/20 text-secondary mx-auto mb-4">
             <CheckCircle className="h-8 w-8" />
           </div>
@@ -137,11 +151,19 @@ export function RegisterModal({ isOpen, onClose, onSwitchToLogin, onSuccess }: R
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-card rounded-2xl max-w-md w-full p-8 relative shadow-2xl border border-border my-8 animate-in fade-in-0 zoom-in-95 duration-200">
+    <div 
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto"
+      onClick={handleClose}
+    >
+      <div 
+        className="bg-card rounded-2xl max-w-md w-full p-8 relative shadow-2xl border border-border my-8 animate-in fade-in-0 zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
+          type="button"
           onClick={handleClose}
-          className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+          className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-muted"
+          aria-label="Cerrar"
         >
           <X size={24} />
         </button>
