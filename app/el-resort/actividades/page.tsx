@@ -40,13 +40,13 @@ export default function ActividadesPage() {
       title: t.activities.hammocks,
       description: t.activities.hammocksDesc,
       icon: BedDouble,
-      image: RESORT_IMAGES.features.pool,
+      image: RESORT_IMAGES.features.terrace,
     },
     {
       title: t.activities.commonAreas,
       description: t.activities.commonAreasDesc,
       icon: Users,
-      image: RESORT_IMAGES.features.lakeView,
+      image: RESORT_IMAGES.features.sunset,
     },
   ]
 
